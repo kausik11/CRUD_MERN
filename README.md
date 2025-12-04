@@ -115,3 +115,7 @@ src/
 - Requests and responses are JSON; set `Content-Type: application/json`.
 - Errors return `{ "message": "..." }` with appropriate HTTP status codes.
 
+
+## API Documentation
+
+- **url** https://documenter.getpostman.com/view/18979382/2sB3dMyrnZ
