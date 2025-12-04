@@ -77,10 +77,14 @@ const getProductById = async (req, res) => {
 //for better practices we try to validate the data within the model (for reference use createProduct function)
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { 
-      new: true, //By default, Mongoose returns old document before update. but we define new: true to “Return the updated document instead of the old one.”
-      runValidators: true //This ensures the update obeys the model schema validation.
-    });
+    //this oeration will update the product instantly without check the logic
+    // const product = await Product.findByIdAndUpdate(req.params.id, req.body, { 
+    //   new: true, //By default, Mongoose returns old document before update. but we define new: true to “Return the updated document instead of the old one.”
+    //   runValidators: true //This ensures the update obeys the model schema validation.
+    // });
+
+    // search the product first
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -94,6 +98,10 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ message: 'description cannot be empty' });
 
     }
+    await Product.findByIdAndUpdate(req.params.id, req.body, {
+      new: true, //By default, Mongoose returns old document before update. but we define new: true to “Return the updated document instead of the old one.”
+      runValidators: true //This ensures the update obeys the model schema validation.
+    })
     res.json(product);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -101,20 +109,45 @@ const updateProduct = async (req, res) => {
 };
 
 // Delete product
-const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    if(product.inStock) {
-      return res.status(400).json({ message: 'Cannot delete a product that is in stock' });
-    }
-    res.json({ message: 'Product deleted' });
-  } catch (error) {
-    res.status(400).json({ message: 'Invalid product ID' });
+// const deleteProduct = async (req, res) => {
+//   try {
+//     const product = await Product.findByIdAndDelete(req.params.id);
+//     if (!product) {
+//       return res.status(404).json({ message: 'Product not found' });
+//     }
+//     if(product.inStock) {
+//       return res.status(400).json({ message: 'Cannot delete a product that is in stock' });
+//     }else{
+//       res.json({ message: 'Product deleted' });
+//     }
+   
+//   } catch (error) {
+//     res.status(400).json({ message: 'Invalid product ID' });
+//   }
+// };
+
+
+const deleteProduct = async (req,res)=>{
+try {
+  // find the id first
+  const product = await Product.findById(req.params.id);
+  if(!product) {
+    return res.status(404).json({ message: 'Product not found' });
   }
-};
+
+  //check the product is in stock or not 
+  if(product.inStock){
+    return res.status(400).json({ message: 'Cannot delete a product that is in stock' });
+  }else{
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Product deleted' });
+  }
+  
+} catch (error) {
+  res.status(400).json({ message: 'Invalid product ID' });
+}
+}
+
 
 module.exports = {
   createProduct,
