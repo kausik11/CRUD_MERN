@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema({
  },
   price: { type: Number, required: true },
   category: { type: String, required: true, 
-    enum:{values: allowedCategories, message: `category must be one of ${allowedCategories.join(', ')}`} 
+    enum:{values: allowedCategories, message: `category must be one of ${allowedCategories.join(', ')}, for more reference see documentation.`} 
     // valiadte:{
     //   validator: function(arr){
     //     return arr.every(cat => allowedCategories.includes(cat));

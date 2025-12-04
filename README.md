@@ -89,6 +89,18 @@ Base URL: `/api/products`
 - **DELETE** `/api/products/:id`
 - Response `200`: `{"message":"Product deleted"}`; `404` if missing.
 
+### Logic
+-  ************ create product **************
+- universal error logging function in server js
+- product name can't be empty and should be string
+- product descriotion can't be empty snd should be string
+- product category should within allowed category ['Electronics', 'Clothing', 'Home', 'Beauty']
+-  ************ update product **************
+- all the logic in create product
+- the product price can't be smaller the current price
+- ********** delete product *************
+- if the product is in stock then the product can't be deleted
+
 ## Project Structure
 ```
 src/
@@ -102,3 +114,4 @@ src/
 ## Notes
 - Requests and responses are JSON; set `Content-Type: application/json`.
 - Errors return `{ "message": "..." }` with appropriate HTTP status codes.
+
