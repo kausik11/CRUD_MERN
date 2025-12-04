@@ -1,9 +1,42 @@
 const Product = require('../models/product');
+// const allowedcategory = ['Electronics', 'Clothing', 'Home', 'Beauty'];
 
 // Create product
 const createProduct = async (req, res) => {
+  const { name, description, price, category, inStock } = req.body || {};
+
+  // Basic validation for expected fields and types
+  if (!name || typeof name !== 'string') {
+    if(name.trim().length === 0) {
+        return res.status(400).json({ message: 'name cannot be empty' });
+    }
+    return res.status(400).json({ message: 'name is required and must be a string' });
+  }
+  if (price === undefined || typeof price !== 'number') {
+    return res.status(400).json({ message: 'price is required and must be a number' });
+  }
+  if (description !== undefined) {
+    if (typeof description !== 'string') {
+      return res.status(400).json({ message: 'description must be a string if provided' });
+    }
+    if (description.trim().length === 0) {
+      return res.status(400).json({ message: 'description cannot be empty' });
+    }
+  }
+  if (category !== undefined) {
+     if(typeof category !== 'string'){
+       return res.status(400).json({ message: 'category must be a string if provided' });
+    }
+    // if(!allowedcategory.includes(category)) {
+    //   return res.status(400).json({ message: `category must be one of ${allowedcategory.join(', ')}` });
+    // }
+  }
+  if (inStock !== undefined && typeof inStock !== 'boolean') {
+    return res.status(400).json({ message: 'inStock must be a boolean if provided' });
+  }
+
   try {
-    const product = await Product.create(req.body);
+    const product = await Product.create({ name, description, price, category, inStock });
     res.status(201).json(product);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -12,6 +45,11 @@ const createProduct = async (req, res) => {
 
 // Get all products
 const getProducts = async (_req, res) => {
+  // if (!_req.dbconnect) {
+  //   return res.status(503).json({
+  //     message: "server is down, wait until it is fixed.",
+  //   });
+  // }
   try {
     const products = await Product.find();
     res.json(products);
@@ -30,18 +68,31 @@ const getProductById = async (req, res) => {
     res.json(product);
   } catch (error) {
     res.status(400).json({ message: 'Invalid product ID' });
+    // this will pass the error to the global error handling middleware
+      //  next(error);
   }
 };
 
 // Update product
+//for better practices we try to validate the data within the model (for reference use createProduct function)
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { 
+      new: true, //By default, Mongoose returns old document before update. but we define new: true to “Return the updated document instead of the old one.”
+      runValidators: true //This ensures the update obeys the model schema validation.
     });
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
+    }
+
+    if (req.body.price < product.price && req.body.price !== undefined) {
+      return res.status(404).json({ message: 'product price cannot be lower than before, contact the admin' });
+    } 
+
+    // the model validator only works only when a create an entry not while updating the entry
+    if( req.body.description !== undefined && req.body.description.trim().length === 0) {
+      return res.status(400).json({ message: 'description cannot be empty' });
+
     }
     res.json(product);
   } catch (error) {
@@ -55,6 +106,9 @@ const deleteProduct = async (req, res) => {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
+    }
+    if(product.inStock) {
+      return res.status(400).json({ message: 'Cannot delete a product that is in stock' });
     }
     res.json({ message: 'Product deleted' });
   } catch (error) {
